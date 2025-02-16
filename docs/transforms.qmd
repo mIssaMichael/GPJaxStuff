@@ -1,0 +1,261 @@
+---
+title: "Constrained Transformations in Stan and Jax"
+author: "Michael Issa"
+date: "February 2025"
+date-format: "MMMM YYYY"
+toc: true
+number-sections: true
+highlight: pygments
+crossref:
+  lst-title: "Stan Program"
+filters:
+   - include-code-files
+format:
+  html:
+    html-math-method: katex
+    theme:
+      - lux
+      - custom.scss
+    standalone: true
+    embed-resources: true
+    code-overflow: wrap
+    linkcolor: "#B97C7C"
+  pdf:
+    keep-tex: true
+    fig-width: 5.5
+    fig-height: 5.5
+    code-overflow: wrap
+    monofontoptions:
+      - Scale=0.5
+format-links: false
+---
+# General Setup
+```{python}
+import matplotlib.pyplot as plt
+import logging
+import cmdstanpy
+from cmdstanpy import CmdStanModel
+import pandas as pd
+import numpy as np
+import warnings
+import arviz as az
+import os
+
+warnings.filterwarnings("ignore")
+
+# Graphic configuration
+c_light = "#DCBCBC"
+c_light_highlight = "#C79999"
+c_mid = "#B97C7C"
+c_mid_highlight = "#A25050"
+c_dark = "#8F2727"
+c_dark_highlight = "#7C0000"
+
+c_light_teal = "#6B8E8E"
+c_mid_teal = "#487575"
+c_dark_teal = "#1D4F4F"
+
+RANDOM_SEED = 58583389
+np.random.seed(RANDOM_SEED)
+az.style.use("arviz-whitegrid")
+
+plt.rcParams['font.family'] = 'serif'
+
+plt.rcParams['xtick.labelsize'] = 12
+plt.rcParams['ytick.labelsize'] = 12
+plt.rcParams['axes.labelsize'] = 12
+plt.rcParams['axes.titlesize'] = 12
+
+plt.rcParams['axes.spines.top'] = False
+plt.rcParams['axes.spines.right'] = False
+plt.rcParams['axes.spines.left'] = True
+plt.rcParams['axes.spines.bottom'] = True
+
+plt.rcParams['axes.xmargin'] = 0
+plt.rcParams['axes.ymargin'] = 0
+
+plt.subplots_adjust(left=0.15, bottom=0.15, right=0.9, top=0.85)
+
+current_working_directory = os.getcwd()
+
+cmdstanpy_logger = logging.getLogger("cmdstanpy")
+cmdstanpy_logger.disabled = True
+cmdstanpy.install_cmdstan(compiler=True)
+
+```
+
+
+This is part 1 of a series of documents charting the progression of my work on JaxGPStuff. I've always found it helpful to take the time to write out the actual content of what a specific part of a program is doing in a long-form cogent manner (something I think isn't done enough if at all), and it's something I immensely appreciate (I don't enjoy digging through your raw codebase to find out what you've done). 
+
+# Constrained Transformations in Stan
+
+We'll start out easy with an example of in Stan and explain what it is Stan is doing by constraining parameters. 
+
+First we'll simulate some simple regression data. 
+```{python}
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Simulate data
+n = 100      
+alpha = 2        
+beta = 1.5       
+sigma = 0.8      
+
+x = np.random.normal(loc=0, scale=1, size=n)
+
+error = np.random.normal(loc=0, scale=sigma, size=n)
+y = alpha + beta * x + error
+
+sim_data = pd.DataFrame({'x': x, 'y': y})
+
+x_reshaped = x.reshape(-1, 1)  
+model = LinearRegression()
+model.fit(x_reshaped, y)
+
+print("Intercept (alpha):", model.intercept_)
+print("Coefficient (beta):", model.coef_[0])
+print("Mean squared error:", mean_squared_error(y, model.predict(x_reshaped)))
+
+plt.scatter(x, y, label="Simulated data", alpha=0.7, color=c_mid_highlight)
+plt.plot(x, alpha + beta * x, color="black", label="True regression line", linewidth=2)
+plt.xlabel("x")
+plt.ylabel("y")
+plt.title("Simulated Regression Data")
+plt.legend(loc="upper left")
+plt.show()
+```
+
+In statistics and maths, we have various constraints on some parameters values. Variances or standard deviations must be positive, probabilities must be between 0 and 1, correlation matrices must have eigenvalues in valid ranges, etc. Some of them we know are constrained to be positive because they are so defined like the standard deviation. Other times, we know, if these parameters are being intepreted or are structured in some way, that these parameters must be positive. Assume we don't already know what our regression parameters values are, as we usually don't. But we have some idea that they are positive because maybe the intercept stands for average height and there are no negative height values so no negative mean heights. This is a constraint imposed by the problem we're studying. 
+
+In Stan, we specify constraints in various ways (see the [variables declaration](https://mc-stan.org/docs/reference-manual/types.html#variable-declaration.section) section for the syntax specification) but typically you'll see <lower=0> following the function argument type. This expresses a constraint of positivity on whatever parameter it attaches to. Here's a Stan model used to fit our simulated data that uses it for all parameter delcarations. 
+
+```{.stan include="models\model1.stan" filename='model1.stan'}
+```
+
+Now, it's quite opaque what exactly the constraints are doing here when the computation occurs, but we can explictly represent the constraints Stan computes using the simple transformations Stan is using under the hood. Here is the model without the constraint syntax but constrained by explicit syntactic representation of the computation and by updating the log probability manually. 
+
+```{.stan include="models\model1_explicit.stan" filename='model1_explicit.stan'}
+```
+
+We fit both our models and look at the output summary now.
+```{python}
+data = {
+    'N': n,
+    'x': x.tolist(),
+    'y': y.tolist(),
+}
+
+```
+
+```{python}
+model1 = CmdStanModel(stan_file='models/model1.stan')
+fit1 = model1.sample(data=data, chains=4, iter_sampling=1000, iter_warmup=500, show_progress=False)
+
+fit1.summary()
+
+```
+
+```{python}
+model1_explicit = CmdStanModel(stan_file='models//model1_explicit.stan')
+fit2 = model1_explicit.sample(data=data, chains=4, iter_sampling=1000, iter_warmup=500, show_progress=False)
+
+fit2.summary()
+
+```
+
+We see the two Stan models provided are mathematically equivalent and will recover the same parameter values because they involve two closely identical computations of the same reparameterization, a constrain of positivity. The key difference between them lies in where the code is being represented. Stan does it somewhere else as a subroutine not represented to the user, but we did it directly. We'll break the math down in a bit more detail now. 
+
+In the first model, the parameters $\alpha$, $\beta$, $\sigma$ are constrained to be greater than or equal to 0 (i.e.,  $\alpha$, $\beta$, and $\sigma$ $\geq$ $0$). This means the model explicitly ensures these parameters are non-negative during sampling.
+
+Stan will sample these parameters directly in their constrained space (keep in mind: sampling in the constrained space is NOT equivalent to sampling and transforming your sample to be constrained. We'll revisit this below). The parameter values are bounded between $0$ and $\infty$. This means the likelihood will incorporate the probability of the parameters being within the defined range, i.e., using the normal distribution for the regression model, along with the boundary conditions on the parameters (such as $\sigma \geq 0$ ).
+
+Both models are mathematically[^1] equivalent because the transformations in the second model enforce the same constraints on the parameters as the first model but instead of performing the adjustment on the log density automatically as Stan does if you specify bounds, we do it by hand (Why increment the target probability by the value $X_{unc}$ you might ask? Keep reading). The transformation $\exp(x)$ maps all real values of $\alpha_{\text{unc}}$, $\beta_{\text{unc}}$, and $\sigma_{\text{unc}}$ to positive values, which is what the first model does by directly imposing constraints $\alpha, \beta, \sigma \geq 0$.
+
+- In the first model, the parameter space is constrained to be non-negative directly, so Stan only samples within the range $[0, \infty]$.
+- In the second model, the parameters are unconstrained, and the exponential transformation ensures that the resulting parameters are positive. The log of the Jacobian $\log \left( \left| \frac{d}{dx} \exp(x) \right| \right)$ is then added to the target log-probability to adjust for the transformation from unconstrained space to constrained space because we want to interpret our sampling in the original space.
+
+Both methods perform close to identical operations[^2] for the log densities and will therefore produce the same parameter values after sampling. This is because both models are doing the same reparameterization.
+
+More precisely, the likelihood function in both models is:
+
+$$
+y_i \sim \mathcal{N}(\alpha + \beta x_i, \sigma)
+$$
+
+In the second model, the unconstrained parameters $\alpha_{\text{unc}}, \beta_{\text{unc}}, \sigma_{\text{unc}}$ are mapped to positive values via the exponential function:
+
+$$
+\alpha = \exp(\alpha_{\text{unc}}), \quad \beta = \exp(\beta_{\text{unc}}), \quad \sigma = \exp(\sigma_{\text{unc}})
+$$
+
+The Jacobian of this transformation is:
+
+$$
+\frac{d}{d\theta} \exp(\theta) = \exp(\theta)
+$$
+
+So, the log-Jacobian adjustment is:
+
+$$
+\log(\exp(\alpha_{\text{unc}})) = \alpha_{\text{unc}}, \quad \log(\exp(\beta_{\text{unc}})) = \beta_{\text{unc}}, \quad \log(\exp(\sigma_{\text{unc}})) = \sigma_{\text{unc}}
+$$
+
+Thus, the log-probability is adjusted by adding these terms to account for the transformation from the unconstrained space to the constrained space. Stan typically does these change of variable transformations automatically using a more generalized transformation for the lower-bound constraint. But I find it quite nice that Stan allows you to program things manually and increment the log density using target+=. You might ask why would I ever care to figure out what the log Jacobian adjustment is when Stan can do it for me?[^3] You don't ever need to if all you're doing is specifying constraints like the ones Stan provides for variables, but there are constraints that you would want to impose that do require it. There are too many reasons you'd want to that I'm unaware of but here are a few: high posterior correlation in unconstrained space (cf. Neal's funnel), numerical stability, prior stability, and sampling efficiency. It would take too long to go into the details and Google is your best friend here. Outside of Bayesian inference related things, constrained transformation have found a home in some kick ass generative models that are based on Normalizing Flows.[^4] 
+
+Looking back at our models you might wonder if these non-linear transformation applied are actually changing the underlying density substanitally. You'd be right to think this. For our example, we can refit the model without the Jacobian adjustment and see what happens.
+
+```{.stan include="models\model1_explicit_no_increment.stan" filename='model1_explicit.stan'}
+```
+
+```{python}
+
+model1_explicit_no_increment = CmdStanModel(stan_file='models//model1_explicit_no_increment.stan')
+fit3 = model1_explicit_no_increment.sample(data=data, chains=4, iter_sampling=1000, iter_warmup=500, show_progress=False)
+
+fit3.summary()
+
+```
+
+Nothing seems to have changed except a decrease in the log probability. The underlying density doesn't exactly match anymore. But, this doesn't mean our inference goes totally awary. The parameters estimates match our first two model estimates because the underlying geometry wasn't distorted by much. We shouldn't expect it to for a simple model where the data is fairly well behaved. We're also not applying the transformation on our observed output value $y$ to expect much of a change, and the likelihood term isn't affected as much by the transformations of the parameters because we have enough data for the estimation to find the posterior mean easily. Even if we had substantially less data in our case we would still be able to find it because we're conducting a simple transformation on parameters we know are positive. 
+
+
+# A note on change of variables vs. transformations
+
+Smarter people than I have tried to drill this distinction down. I highly, highly recommend reading and rereading the Stan documentation [here](https://mc-stan.org/docs/stan-users-guide/reparameterization.html#change-of-variables.chapter). They give many examples at varying complexity and really hammer home the difference. 
+
+To put it succietnly, change of variables transformation are transformations that first transform the variables AND THEN sample them. Whereas transformations are typically taken to be instances where we sample some variables AND THEN apply a functional transformation to them. Again, read that Stan article. It provides many examples that demonstrate the difference.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[^1]: Not computationally equivalent. Besides that point, it's also not true that a change of variables preserves the log density. It would defeat the purpose if it did, since the transformation defines a probability density, which is a non-unique, parameterization-dependent function in $\mathbb{R}^N \to \mathbb{R}_+$. In practice, this means a given model can be represented different ways, and different representations have different computational performances. There are at least two levels of representation of a model going on here. One is at the low level (where we are) where we have changes in the log density due to various computations performed on it. The other level is one we'll get to in the next section where we reparameterize a model by composing it with some functions to transform the sampled outputs. This is what you typically do, for example, in reparameterizing a beta distribution with the mean and total counts rather than in terms of the two counts, $\alpha$ and $\beta$. This reparameterization doesn't distort the underlying log density when you sample because it's done after the fact. 
+
+[^2]: Not exactly. [Stan uses the general transformation](https://mc-stan.org/docs/reference-manual/transforms.html#lower-bound-transform.section) $X = \exp(Y) + a$ for a lower bound constraint being $a$. 
+
+[^3]: Besides the fact that it's nice to know you can do it and you should know what Stan is doing!
+
+[^4]: Again Google.
+
+
+
