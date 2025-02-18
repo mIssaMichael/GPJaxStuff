@@ -292,19 +292,7 @@ Stan}\label{constrained-transformations-in-stan}
 We'll start out easy with an example of in Stan and explain what it is
 Stan is doing by constraining parameters.
 
-First we'll simulate some simple regression data. In statistics and
-maths, we have various constraints on some parameters values. Variances
-or standard deviations must be positive, probabilities must be between 0
-and 1, correlation matrices must have eigenvalues in valid ranges, etc.
-Some of them we know are constrained to be positive because they are so
-defined like the standard deviation. Other times we know, if these
-parameters are being intepreted or are structured in some way, that
-these parameters must be positive. Assume we don't already know what our
-regression parameters values are, as we usually don't. But we have some
-idea that they are positive because maybe the intercept stands for
-average height and there are no negative height values so no negative
-mean heights. This is a constraint imposed by the problem we're
-studying.
+First we'll simulate some simple regression data.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -312,10 +300,10 @@ studying.
 \ImportTok{from}\NormalTok{ sklearn.metrics }\ImportTok{import}\NormalTok{ mean\_squared\_error}
 
 \CommentTok{\# Simulate data}
-\NormalTok{n }\OperatorTok{=} \DecValTok{100}      
-\NormalTok{alpha }\OperatorTok{=} \DecValTok{2}        
-\NormalTok{beta }\OperatorTok{=} \FloatTok{1.5}       
-\NormalTok{sigma }\OperatorTok{=} \FloatTok{0.8}      
+\NormalTok{n }\OperatorTok{=} \DecValTok{100}
+\NormalTok{alpha }\OperatorTok{=} \DecValTok{2}
+\NormalTok{beta }\OperatorTok{=} \FloatTok{1.5}
+\NormalTok{sigma }\OperatorTok{=} \FloatTok{0.8}
 
 \NormalTok{x }\OperatorTok{=}\NormalTok{ np.random.normal(loc}\OperatorTok{=}\DecValTok{0}\NormalTok{, scale}\OperatorTok{=}\DecValTok{1}\NormalTok{, size}\OperatorTok{=}\NormalTok{n)}
 
@@ -324,7 +312,7 @@ studying.
 
 \NormalTok{sim\_data }\OperatorTok{=}\NormalTok{ pd.DataFrame(\{}\StringTok{\textquotesingle{}x\textquotesingle{}}\NormalTok{: x, }\StringTok{\textquotesingle{}y\textquotesingle{}}\NormalTok{: y\})}
 
-\NormalTok{x\_reshaped }\OperatorTok{=}\NormalTok{ x.reshape(}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{)  }
+\NormalTok{x\_reshaped }\OperatorTok{=}\NormalTok{ x.reshape(}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{)}
 \NormalTok{model }\OperatorTok{=}\NormalTok{ LinearRegression()}
 \NormalTok{model.fit(x\_reshaped, y)}
 
@@ -350,10 +338,23 @@ Mean squared error: 0.6303553871943935
 
 \pandocbounded{\includegraphics[keepaspectratio]{transforms_files/figure-pdf/cell-3-output-2.pdf}}
 
+In statistics and maths, we have various constraints on some parameters
+values. Variances or standard deviations must be positive, probabilities
+must be between 0 and 1, correlation matrices must have eigenvalues in
+valid ranges, etc. Some of them we know are constrained to be positive
+because they are so defined like the standard deviation. Other times, we
+know, if these parameters are being intepreted or are structured in some
+way, that these parameters must be positive. Assume we don't already
+know what our regression parameters values are, as we usually don't. But
+we have some idea that they are positive because maybe the intercept
+stands for average height and there are no negative height values so no
+negative mean heights. This is a constraint imposed by the problem we're
+studying.
+
 In Stan, we specify constraints in various ways (see the
 \href{https://mc-stan.org/docs/reference-manual/types.html\#variable-declaration.section}{variables
 declaration} section for the syntax specification) but typically you'll
-see \textless lower=0\textgreater{} following the function argument
+see \textless{}``lower=0''\textgreater{} following the function argument
 type. This expresses a constraint of positivity on whatever parameter it
 attaches to. Here's a Stan model used to fit our simulated data that
 uses it for all parameter delcarations.
@@ -456,14 +457,14 @@ We fit both our models and look at the output summary now.
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-lp\_\_ & -27.548300 & 0.026476 & 1.198950 & 0.964209 & -29.837700 &
--27.240700 & -26.259800 & 2147.79 & 2558.97 & 1.003560 \\
-alpha & 1.879680 & 0.001388 & 0.079960 & 0.078289 & 1.746770 & 1.878510
-& 2.011470 & 3346.63 & 2709.65 & 0.999894 \\
-beta & 1.525990 & 0.001338 & 0.079584 & 0.076391 & 1.393150 & 1.525290 &
-1.657350 & 3544.73 & 2811.84 & 1.003250 \\
-sigma & 0.813226 & 0.000993 & 0.057706 & 0.055225 & 0.724179 & 0.809241
-& 0.914189 & 3491.32 & 2747.22 & 1.000190 \\
+lp\_\_ & -27.622300 & 0.027799 & 1.214040 & 1.002390 & -30.073900 &
+-27.317500 & -26.280500 & 1976.00 & 2405.99 & 1.00268 \\
+alpha & 1.877840 & 0.001274 & 0.081531 & 0.080550 & 1.743550 & 1.877650
+& 2.012280 & 4108.88 & 2843.57 & 1.00119 \\
+beta & 1.525980 & 0.001304 & 0.081460 & 0.082344 & 1.392380 & 1.524590 &
+1.661810 & 3924.87 & 2613.48 & 1.00351 \\
+sigma & 0.809912 & 0.001003 & 0.059192 & 0.056371 & 0.718451 & 0.806936
+& 0.912513 & 3579.25 & 2652.97 & 1.00011 \\
 \end{longtable}
 
 \begin{Shaded}
@@ -483,20 +484,20 @@ sigma & 0.813226 & 0.000993 & 0.057706 & 0.055225 & 0.724179 & 0.809241
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-lp\_\_ & -27.591200 & 0.027615 & 1.224010 & 0.990822 & -30.099600 &
--27.270100 & -26.264700 & 1983.21 & 2941.93 & 1.00133 \\
-alpha\_unc & 0.629911 & 0.000751 & 0.042230 & 0.041859 & 0.558216 &
-0.631891 & 0.696182 & 3311.64 & 2410.25 & 1.00041 \\
-beta\_unc & 0.420838 & 0.000920 & 0.054107 & 0.053601 & 0.329447 &
-0.422932 & 0.508122 & 3538.02 & 2529.52 & 1.00040 \\
-sigma\_unc & -0.209985 & 0.001252 & 0.071872 & 0.071369 & -0.326586 &
--0.210925 & -0.089854 & 3311.98 & 2626.49 & 1.00020 \\
-alpha & 1.879110 & 0.001392 & 0.079052 & 0.078400 & 1.747550 & 1.881160
-& 2.006080 & 3311.64 & 2410.25 & 1.00041 \\
-beta & 1.525460 & 0.001388 & 0.082199 & 0.081291 & 1.390200 & 1.526430 &
-1.662170 & 3538.04 & 2529.52 & 1.00038 \\
-sigma & 0.812696 & 0.001027 & 0.058660 & 0.057593 & 0.721382 & 0.809835
-& 0.914065 & 3312.01 & 2626.49 & 1.00015 \\
+lp\_\_ & -27.566200 & 0.027273 & 1.182140 & 0.968434 & -29.892600 &
+-27.255300 & -26.265100 & 2050.02 & 2289.04 & 1.00077 \\
+alpha\_unc & 0.629589 & 0.000655 & 0.041943 & 0.041334 & 0.559548 &
+0.631160 & 0.697422 & 4156.59 & 2745.01 & 1.00059 \\
+beta\_unc & 0.420922 & 0.000804 & 0.052845 & 0.053089 & 0.331678 &
+0.423594 & 0.505266 & 4369.39 & 3162.81 & 0.99954 \\
+sigma\_unc & -0.210302 & 0.001363 & 0.071842 & 0.070495 & -0.323411 &
+-0.212575 & -0.088289 & 2813.00 & 2354.88 & 1.00071 \\
+alpha & 1.878490 & 0.001227 & 0.078695 & 0.077755 & 1.749880 & 1.879790
+& 2.008570 & 4156.60 & 2745.01 & 1.00059 \\
+beta & 1.525490 & 0.001216 & 0.080304 & 0.081024 & 1.393310 & 1.527440 &
+1.657430 & 4369.41 & 3162.81 & 0.99954 \\
+sigma & 0.812439 & 0.001120 & 0.058713 & 0.057120 & 0.723676 & 0.808500
+& 0.915497 & 2813.03 & 2354.88 & 1.00075 \\
 \end{longtable}
 
 We see the two Stan models provided are mathematically equivalent and
@@ -521,14 +522,31 @@ of the parameters being within the defined range, i.e., using the normal
 distribution for the regression model, along with the boundary
 conditions on the parameters (such as \(\sigma \geq 0\) ).
 
-Both models are mathematically{[}\^{}1{]} equivalent because the
-transformations in the second model enforce the same constraints on the
-parameters as the first model but instead of performing the adjustment
-on the log density automatically as Stan does if you specify bounds, we
-do it by hand (Why increment the target probability by the value
-\(X_{unc}\) you might ask? Keep reading). The transformation \(\exp(x)\)
-maps all real values of \(\alpha_{\text{unc}}\), \(\beta_{\text{unc}}\),
-and \(\sigma_{\text{unc}}\) to positive values, which is what the first
+Both models are mathematically\footnote{Not computationally equivalent.
+  Besides that point, it's also not true that a change of variables
+  preserves the log density. It would defeat the purpose if it did,
+  since the transformation defines a probability density, which is a
+  non-unique, parameterization-dependent function in
+  \(\mathbb{R}^N \to \mathbb{R}_+\). In practice, this means a given
+  model can be represented different ways, and different representations
+  have different computational performances. There are at least two
+  levels of representation of a model going on here. One is at the low
+  level (where we are) where we have changes in the log density due to
+  various computations performed on it. The other level is one we'll get
+  to in the next section where we reparameterize a model by composing it
+  with some functions to transform the sampled outputs. This is what you
+  typically do, for example, in reparameterizing a beta distribution
+  with the mean and total counts rather than in terms of the two counts,
+  \(\alpha\) and \(\beta\). This reparameterization doesn't distort the
+  underlying log density when you sample because it's done after the
+  fact.} equivalent because the transformations in the second model
+enforce the same constraints on the parameters as the first model but
+instead of performing the adjustment on the log density automatically as
+Stan does if you specify bounds, we do it by hand (Why increment the
+target probability by the value \(X_{unc}\) you might ask? Keep
+reading). The transformation \(\exp(x)\) maps all real values of
+\(\alpha_{\text{unc}}\), \(\beta_{\text{unc}}\), and
+\(\sigma_{\text{unc}}\) to positive values, which is what the first
 model does by directly imposing constraints
 \(\alpha, \beta, \sigma \geq 0\).
 
@@ -548,10 +566,12 @@ model does by directly imposing constraints
   interpret our sampling in the original space.
 \end{itemize}
 
-Both methods perform close to identical operations{[}\^{}2{]} for the
-log densities and will therefore produce the same parameter values after
-sampling. This is because both models are doing the same
-reparameterization.
+Both methods perform close to identical operations\footnote{Not exactly.
+  \href{https://mc-stan.org/docs/reference-manual/transforms.html\#lower-bound-transform.section}{Stan
+  uses the general transformation} \(X = \exp(Y) + a\) for a lower bound
+  constraint being \(a\).} for the log densities and will therefore
+produce the same parameter values after sampling. This is because both
+models are doing the same reparameterization.
 
 More precisely, the likelihood function in both models is:
 
@@ -586,23 +606,108 @@ automatically using a more generalized transformation for the
 lower-bound constraint. But I find it quite nice that Stan allows you to
 program things manually and increment the log density using target+=.
 You might ask why would I ever care to figure out what the log Jacobian
-adjustment is when Stan can do it for me?{[}\^{}3{]} You don't ever need
-to if all you're doing is specifying constraints like the ones Stan
-provides for variables, but there are constraints that you would want to
-impose that do require it. There are too many reasons you'd want to that
-I'm unaware of but here are a few: high posterior correlation in
-unconstrained space (cf.~Neal's funnel), numerical stability, prior
-stability, and sampling efficiency. It would take too long to go into
-the details and Google is your best friend. Outside of Bayesian
-inference related things, constrained transformation have found a home
-in some kick ass generative models that are based on Normalizing
-Flows.\footnote{Again Google.}
+adjustment is when Stan can do it for me?\footnote{Besides the fact that
+  it's nice to know you can do it and you should know what Stan is
+  doing!} You don't ever need to if all you're doing is specifying
+constraints like the ones Stan provides for variables, but there are
+constraints that you would want to impose that do require it. There are
+too many reasons you'd want to that I'm unaware of but here are a few:
+high posterior correlation in unconstrained space (cf.~Neal's funnel),
+numerical stability, prior stability, and sampling efficiency. It would
+take too long to go into the details and Google is your best friend
+here. Outside of Bayesian inference related things, constrained
+transformation have found a home in some kick ass generative models that
+are based on Normalizing Flows.\footnote{Again Google.}
 
-\section{A note on change of variables transformation vs
-transformations}\label{a-note-on-change-of-variables-transformation-vs-transformations}
+Looking back at our models you might wonder if these non-linear
+transformation applied are actually changing the underlying density
+substanitally. You'd be right to think this. For our example, we can
+refit the model without the Jacobian adjustment and see what happens.
 
-Smarter people than I have tried to drill this distinction. I highly,
-highly recommend reading and rereading the Stan documentation
+\begin{codelisting}
+
+\caption{\texttt{model1\_explicit.stan}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{data}\NormalTok{ \{}
+    \DataTypeTok{int}\NormalTok{\textless{}}\KeywordTok{lower}\NormalTok{=}\DecValTok{0}\NormalTok{\textgreater{} N;}
+    \DataTypeTok{vector}\NormalTok{[N] x;}
+    \DataTypeTok{vector}\NormalTok{[N] y;}
+\NormalTok{\}}
+
+\KeywordTok{parameters}\NormalTok{ \{}
+    \DataTypeTok{real}\NormalTok{ alpha\_unc; }
+    \DataTypeTok{real}\NormalTok{ beta\_unc;}
+    \DataTypeTok{real}\NormalTok{ sigma\_unc;}
+\NormalTok{\}}
+
+\KeywordTok{transformed parameters}\NormalTok{ \{}
+    \DataTypeTok{real}\NormalTok{ alpha = exp(alpha\_unc); }
+    \DataTypeTok{real}\NormalTok{ beta = exp(beta\_unc);   }
+    \DataTypeTok{real}\NormalTok{ sigma = exp(sigma\_unc); }
+\NormalTok{\}}
+
+\KeywordTok{model}\NormalTok{ \{}
+\NormalTok{    y \textasciitilde{} normal(alpha + beta * x, sigma);}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\end{codelisting}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{model1\_explicit\_no\_increment }\OperatorTok{=}\NormalTok{ CmdStanModel(stan\_file}\OperatorTok{=}\StringTok{\textquotesingle{}models//model1\_explicit\_no\_increment.stan\textquotesingle{}}\NormalTok{)}
+\NormalTok{fit3 }\OperatorTok{=}\NormalTok{ model1\_explicit\_no\_increment.sample(data}\OperatorTok{=}\NormalTok{data, chains}\OperatorTok{=}\DecValTok{4}\NormalTok{, iter\_sampling}\OperatorTok{=}\DecValTok{1000}\NormalTok{, iter\_warmup}\OperatorTok{=}\DecValTok{500}\NormalTok{, show\_progress}\OperatorTok{=}\VariableTok{False}\NormalTok{)}
+
+\NormalTok{fit3.summary()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lllllllllll@{}}
+\toprule\noalign{}
+& Mean & MCSE & StdDev & MAD & 5\% & 50\% & 95\% & ESS\_bulk & ESS\_tail
+& R\_hat \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+lp\_\_ & -28.465300 & 0.027567 & 1.255610 & 1.004020 & -30.902100 &
+-28.137100 & -27.114300 & 2184.55 & 2489.87 & 1.000710 \\
+alpha\_unc & 0.628232 & 0.000724 & 0.044194 & 0.044910 & 0.555909 &
+0.628785 & 0.699591 & 3742.07 & 3012.52 & 1.000300 \\
+beta\_unc & 0.417134 & 0.000811 & 0.054371 & 0.054282 & 0.326635 &
+0.417550 & 0.504227 & 4536.13 & 3117.52 & 1.001010 \\
+sigma\_unc & -0.213706 & 0.001194 & 0.070709 & 0.070322 & -0.326706 &
+-0.215641 & -0.094641 & 3567.97 & 2934.72 & 0.999307 \\
+alpha & 1.876120 & 0.001359 & 0.082917 & 0.084278 & 1.743530 & 1.875330
+& 2.012930 & 3742.04 & 3012.52 & 1.000260 \\
+beta & 1.519840 & 0.001227 & 0.082412 & 0.082573 & 1.386290 & 1.518240 &
+1.655700 & 4536.21 & 3117.52 & 1.000910 \\
+sigma & 0.809614 & 0.000980 & 0.057637 & 0.056042 & 0.721296 & 0.806024
+& 0.909699 & 3567.97 & 2934.72 & 0.999291 \\
+\end{longtable}
+
+Nothing seems to have changed except a decrease in the log probability.
+The underlying density doesn't exactly match anymore. But, this doesn't
+mean our inference goes totally awary. The parameters estimates match
+our first two model estimates because the underlying geometry wasn't
+distorted by much. We shouldn't expect it to for a simple model where
+the data is fairly well behaved. We're also not applying the
+transformation on our observed output value \(y\) to expect much of a
+change, and the likelihood term isn't affected as much by the
+transformations of the parameters because we have enough data for the
+estimation to find the posterior mean easily. Even if we had
+substantially less data in our case we would still be able to find it
+because we're conducting a simple transformation on parameters we know
+are positive.
+
+\section{A Note on Change of Variables VS.
+Transformations}\label{a-note-on-change-of-variables-vs.-transformations}
+
+Smarter people than I have tried to drill this distinction down. I
+highly, highly recommend reading and rereading the Stan documentation
 \href{https://mc-stan.org/docs/stan-users-guide/reparameterization.html\#change-of-variables.chapter}{here}.
 They give many examples at varying complexity and really hammer home the
 difference.
@@ -614,21 +719,211 @@ sample some variables AND THEN apply a functional transformation to
 them. Again, read that Stan article. It provides many examples that
 demonstrate the difference.
 
-{[}\^{}1{]} NOT COMPUTATIONALLY EQUIVALENT.
+Before moving onto the architecture for our own transform class, I'll
+plug in two nice articles. One of them by
+\href{https://jsocolar.github.io/jacobians/\#fn9}{Jacob Socolar}
+clarifies the nature of the Jacobian adjustment with a simple example.
+He links to various soruces on the same topic in there that are well
+worth a look. The other post is by
+\href{https://users.aalto.fi/~ave/casestudies/Jacobian/jacobian.html}{Aki
+Vehtari} and gives a nice treatment of the Laplace approximation and
+Jacobian adjustment, going slighly more in depth. I said two but I can't
+leave out
+\href{https://betanalpha.github.io/assets/case_studies/probability_theory.html\#4_representing_probability_distributions_with_densities}{this}
+article by Michael Betancourt that does go through the mathematical
+details in the section linked. Socolar links to it and \emph{highly
+recommends} it. As do I. Betancourt's work is always
+top-tier.\footnote{LOVE his work. Best stuff out there! Read it and buy
+  him a coffee \href{https://www.patreon.com/betanalpha}{here} if you
+  feel you got something out of it.}
 
-{[}\^{}2{]} Not exactly.
-\href{https://mc-stan.org/docs/reference-manual/transforms.html\#lower-bound-transform.section}{Stan
-uses the general transformation} \(X = \exp(Y) + a\) for a lower bound
-constraint being \(a\).
+\section{Some Quick Mathematics for Probability and Constrained
+Transformations}\label{some-quick-mathematics-for-probability-and-constrained-transformations}
 
-{[}\^{}3{]} Besides the fact that it's nice to know you can do it and
-you should know what Stan is doing!
+``It would be good to cover the foundations of continous probability
+theory. Start with a space consisting of an ambient set \(X\), endowed
+with a \(\sigma\)-algebra \(\mathcal{X}\) consisting of all well-behaved
+subsets of \(X\) and a probability distribution \(\pi\) that maps
+elemens of the \(\sigma\)-algebra into probabilities in a way that's
+comptabile with countable unions, intersections, and
+complements.''\footnote{\href{https://discourse.mc-stan.org/t/why-transformations-need-to-be-invertible-in-change-of-variable-in-probability-theory/22317/11?u=mike1}{Betancourt}}
 
-It would defeat the purpose if they were, and the transformation defines
-a probability density, which is a non-unique, parameterization-dependent
-function in \(\mathbb{R}^N \to \mathbb{R}_+\). In practice, this means a
-given model can be represented different ways, and different
-representations have different computational performances.
+When working with probability theory, particulary on \(\mathbb{R}^n\),
+the choice of \(\sigma\)-algebra is crucial. The two most common
+\(\sigma\)-algebras are (1) Borel \(\sigma\)-algebra,
+\(\mathcal{B}(\mathbb{R}^n)\), generated by all open sets in
+\(\mathbb{R}^n\). These include intervals, rectangles, and their
+countable operations. And (2) Lebesgue \(\sigma\)-algebra,
+\(\mathcal{L}(\mathbb{R}^n)\), which are an extension of the Borel
+\(\sigma\)-algebra that includes more sets. The relationship between
+these is:
+
+\[
+\mathcal{B}(\mathbb{R}^n) \subset \mathcal{L}(\mathbb{R}^n)
+\]
+
+\(\mathcal{L}(\mathbb{R}^n)\) contains all Borel sets plus all subsets
+of Borel sets with Lebesgue measure zero. When considering
+transformations between spaces, these distinctions become important:
+measurable functions must preserve the \(\sigma\)-algebra structure.
+
+``When considering another space \(Y\) equipped with its own
+\(\sigma\)-algebra \(\mathcal{Y}\) along with a map
+\(F: X \rightarrow Y\), this point-wise mapping can induce maps between
+objects defined on these spaces. The original map \(F\) induces both a
+pushforward map (in the same direction of \(F\)) and a pullback map (in
+the opposite direction of \(F\)) between subsets on \(X\) and \(Y\). If
+the pullback map is compatible with the \(\sigma\)-algebras so that for
+every \(B \in \mathcal{Y}\) we have \(F^{-1}(B) \subset \mathcal{X}\),
+then we can define an induced pushforward map between probability
+distributions. Every probability distribution \(\pi\) defined on \(X\)
+defines a pushforward probability distribution \(F_\pi\) on \(Y\) via
+\(P_{F_\pi}[B] = P_\pi[F^{-1}(B)]\).
+
+Now let's consider another space \(Y\) equipped with its own
+\(\sigma\)-algebra \(\mathcal{Y}\) along with a map
+\(F: X \rightarrow Y\).
+
+Nominally \(F\) just maps points in \(X\) to points in \(Y\) but this
+point-wise mapping can also induce maps from objects defined on \(X\) to
+objects defined on \(Y\). For example by breaking a subset
+\(A \subset X\) into points and then mapping them to \(Y\) before
+collecting those output points in other subset \(F(A) \subset Y\) the
+original map \(F\) induces a map from subsets on \(X\) to subsets on
+\(Y\). This kind of induced map in the same direction of \(F\) is called
+a \emph{pushforward} along \(F\).
+
+At the same time \(F\) might also induce maps from objects defined on
+\(Y\) to objects defined on \(X\). If \(F\) isn't bijective then we
+can't define an inverse point-wise map \(F^{-1} : Y \rightarrow X\), but
+we can we can define a map from subsets \(B \subset Y\) to subsets
+\(F^{-1}(B) \subset X\). This kind of induced map in the opposite
+direction of \(F\) is called a \emph{pullback} along \(F\).
+
+So the point-wise map \(F\) induces both a pushforward and pullback map
+between subsets on \(X\) and \(Y\). These induced maps, however, will
+not in general respect the \(\sigma\)-algebras. In particular if
+\(A \in \mathcal{X}\) then the output of the pushforward map \(F(A)\)
+need not be in \(\mathcal{Y}\), and vice versa for the pullback map.
+
+If the pullback map is compatible with the \(\sigma\)-algebras so that
+for every \(B \in \mathcal{Y}\) we have
+\(F^{-1}(B) \subset \mathcal{X}\) then we can define \emph{another}
+induced pushforward map, this time between probability distributions.
+Every probability distribution \(\pi\) defined on \(X\) defines a
+pushforward probability distribution \(F_{*} \pi\) on \(Y\) via the
+probabilities
+
+\[
+\mathbb{P}_{F_{*} \pi}[B] = \mathbb{P}_{\pi}[ F^{-1}(B) ].
+\]
+
+Again we need \(F^{-1}(B)\) to be in \(\mathcal{X}\) otherwise the
+initial probability distribution won't know how to assign a probability
+to the pullback subset.
+
+\emph{Measurable} functions/maps/transformations are just the maps
+satisfying the compatibility requirement that allows us to define
+pushforward probability distributions. In other words measurable maps
+are the only maps that allow us to translate probability distributions
+from one space to another.
+
+Note that at this point no other requirement has been made on the
+structure of \(X\), \(Y\), and \(F\). \(X\) and \(Y\) don't have to have
+the same dimensions, \(F\) doesn't have to be bijective or even
+injective so long as it satisfies the \(\sigma\)-algebra consistency
+property.
+
+If the dimension of \(Y\) is less than the dimension of \(X\) then a
+measurable surjection \(F : X \rightarrow Y\) is commonly known as
+projection map, and pushforward distributions are known as
+\emph{marginal} distributions.
+
+If the dimension of \(X\) and \(Y\) are the same and both \(F\) and
+\(F^{-1}\) are measurable then a bijection \(F: X \rightarrow Y\) is
+commonly known as a reparameterization.
+
+(Side note: codomains are irrelevant here as the \(\sigma\)-algebras and
+probability distributions of interest are all defined over the entire
+domain).
+
+They key difference between these two types of maps is that projections
+loose information while reparameterizations do not. If \(F\) is a
+reparameterization then we can start at \(\pi\) on \(X\), pushforward to
+\(F_{*} \pi\) on \(Y\), then pushforward along \(F^{-1}\) to recover the
+original distribution,
+
+\[
+(F^{-1})_{*} F_{*} \pi = \pi.
+\]
+
+This is not true of projection functions -- we can map \(\pi\) on \(X\)
+to \(F_{*} \pi\) on \(Y\) but there's no way to recover \(\pi\) from
+that pushforward distribution.
+
+Okay, so now we're \emph{finally} ready to talk about probability
+density functions. Probability density functions are functions that
+quantify the difference between two measures. Mathematically we denote
+the density function of \(\pi_{2}\) with respect to \(\pi_{1}\) as
+
+\[
+\pi_{21}(x) = \frac{ \mathrm{d} \pi_{2} }{ \mathrm{d} \pi_{1} } (x).
+\]
+
+Most often we correct some standard ``uniform'' distribution on the
+ambient space to the probability distribution of interest. If \(X\) is a
+real space then that uniform distribution is the Lebesgue measure,
+\(\mathcal{L}\). In other words the probability density function of
+\(\pi\) is actually the probability density function of \(\pi\) relative
+to the Lebesgue measure,
+
+\[
+\pi(x) = \frac{ \mathrm{d} \pi }{ \mathrm{d} \mathcal{L} } (x).
+\]
+
+Using the above machinery we can in some cases work out how to construct
+pushforward probability density functions. The basic idea is to take a
+distribution on \(X\), push it forward along \(F\) to \(F_{*} \pi\) on
+\(Y\) and then construct the density of each with respect to the uniform
+measures on \(X\) and \(Y\) respectively. In other words
+
+\[
+\pi(x) = \frac{ \mathrm{d} \pi }{ \mathrm{d} \mathcal{L}_{X} } (x) \mapsto \pi(y) = \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} \mathcal{L}_{Y} } (y).
+\]
+
+Notice that we pushforward \(\pi\) along \(F\) but we define the
+densities with respect to the uniform distributions on \(X\) and \(Y\)
+respectively. We don't transform the uniform distribution on \(X\) to
+some distribution on \(Y\) because that pushforward distribution will in
+general no longer be uniform! Indeed when \(F: X \rightarrow Y\) is a
+measurable bijection the amount by which \(F\) warps the initial uniform
+distribution is just the Jacobian determinant!
+
+Mathematically when \(F\) is a bijection we can write
+
+\[
+\pi(y) = \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} \mathcal{L}_{Y} } (y) = \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} F_{*} \mathcal{L}_{X} } (y) \cdot \frac{ \mathrm{d} F_{*} \mathcal{L}_{X} }{ \mathrm{d} \mathcal{L}_{Y} } (y) = \pi(F^{-1}(y)) \cdot | J |(y)
+\]
+
+which is exactly the usual ``change of variables'' formula that's pulled
+out of thin air.
+
+When \(F\) is a surjection then the density of the pushforward uniform
+distribution from \(X\) relative to the uniform distribution on \(Y\),
+\(\mathrm{d}\mathcal{L}_{X}\)/\(\mathrm{d}\mathcal{L}_{Y}\) is singular
+and so the usual change of variables formula cannot be applied. In these
+cases working out the pushforward probability density functions, or the
+marginal density functions, is much, much harder and usually cannot be
+done analytically.''\footnote{\href{https://discourse.mc-stan.org/t/why-transformations-need-to-be-invertible-in-change-of-variable-in-probability-theory/22317/11?u=mike1}{Betancourt}}
+
+\section{Contraint Transformations in
+GPJaxStuff}\label{contraint-transformations-in-gpjaxstuff}
+
+Why should we care about contraint transformations for Gaussian
+Processes? We can enforce various kinds of contraints on our mean
+function, kernel outputs, kernel parameters, or predictions. GPs are
+glorified priors on function spaces. We should be constraining that
+space as much as possible. The structure of our
 
 
 

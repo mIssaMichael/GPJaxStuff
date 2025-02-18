@@ -128,7 +128,7 @@ plt.show()
 
 In statistics and maths, we have various constraints on some parameters values. Variances or standard deviations must be positive, probabilities must be between 0 and 1, correlation matrices must have eigenvalues in valid ranges, etc. Some of them we know are constrained to be positive because they are so defined like the standard deviation. Other times, we know, if these parameters are being intepreted or are structured in some way, that these parameters must be positive. Assume we don't already know what our regression parameters values are, as we usually don't. But we have some idea that they are positive because maybe the intercept stands for average height and there are no negative height values so no negative mean heights. This is a constraint imposed by the problem we're studying.
 
-In Stan, we specify constraints in various ways (see the [variables declaration](https://mc-stan.org/docs/reference-manual/types.html#variable-declaration.section) section for the syntax specification) but typically you'll see <lower=0> following the function argument type. This expresses a constraint of positivity on whatever parameter it attaches to. Here's a Stan model used to fit our simulated data that uses it for all parameter delcarations.
+In Stan, we specify constraints in various ways (see the [variables declaration](https://mc-stan.org/docs/reference-manual/types.html#variable-declaration.section) section for the syntax specification) but typically you'll see <"lower=0"> following the function argument type. This expresses a constraint of positivity on whatever parameter it attaches to. Here's a Stan model used to fit our simulated data that uses it for all parameter delcarations.
 
 ```{.stan include="models\model1.stan" filename='model1.stan'}
 ```
@@ -243,7 +243,6 @@ $\mathcal{L}(\mathbb{R}^n)$ contains all Borel sets plus all subsets of Borel se
 
 "When considering another space $Y$ equipped with its own $\sigma$-algebra $\mathcal{Y}$ along with a map $F: X \rightarrow Y$, this point-wise mapping can induce maps between objects defined on these spaces. The original map $F$ induces both a pushforward map (in the same direction of $F$) and a pullback map (in the opposite direction of $F$) between subsets on $X$ and $Y$. If the pullback map is compatible with the $\sigma$-algebras so that for every $B \in \mathcal{Y}$ we have $F^{-1}(B) \subset \mathcal{X}$, then we can define an induced pushforward map between probability distributions. Every probability distribution $\pi$ defined on $X$ defines a pushforward probability distribution $F_\pi$ on $Y$ via $P_{F_\pi}[B] = P_\pi[F^{-1}(B)]$.
 
-[quote="betanalpha, post:11, topic:22317"]
 Now let’s consider another space $Y$ equipped with its own $\sigma$-algebra $\mathcal{Y}$ along with a map $F: X \rightarrow Y$.
 
 Nominally $F$ just maps points in $X$ to points in $Y$ but this point-wise mapping can also induce maps from objects defined on $X$ to objects defined on $Y$. For example by breaking a subset $A \subset X$ into points and then mapping them to $Y$ before collecting those output points in other subset $F(A) \subset Y$ the original map $F$ induces a map from subsets on $X$ to subsets on $Y$. This kind of induced map in the same direction of $F$ is called a *pushforward* along $F$.
@@ -301,12 +300,12 @@ Notice that we pushforward $\pi$ along $F$ but we define the densities with resp
 Mathematically when $F$ is a bijection we can write
 
 $$
-\begin{align*} \pi(y) &= \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} \mathcal{L}_{Y} } (y) \\ &= \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} F_{*} \mathcal{L}_{X} } (y) \cdot \frac{ \mathrm{d} F_{*} \mathcal{L}_{X} }{ \mathrm{d} \mathcal{L}_{Y} } (y) \\ &= \pi(F^{-1}(y)) \cdot | J |(y) \end{align*}
+\pi(y) = \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} \mathcal{L}_{Y} } (y) = \frac{ \mathrm{d} F_{*} \pi }{ \mathrm{d} F_{*} \mathcal{L}_{X} } (y) \cdot \frac{ \mathrm{d} F_{*} \mathcal{L}_{X} }{ \mathrm{d} \mathcal{L}_{Y} } (y) = \pi(F^{-1}(y)) \cdot | J |(y)
 $$
 
 which is exactly the usual “change of variables” formula that’s pulled out of thin air.
 
-When $F$ is a surjection then the density of the pushforward uniform distribution from $X$ relative to the uniform distribution on $Y$, $\mathrm{d} \mathcal{L}_{X} / \mathrm{d} \mathcal{L}_{Y} $ is singular and so the usual change of variables formula cannot be applied. In these cases working out the pushforward probability density functions, or the marginal density functions, is much, much harder and usually cannot be done analytically."[^6]
+When $F$ is a surjection then the density of the pushforward uniform distribution from $X$ relative to the uniform distribution on $Y$, $\mathrm{d}\mathcal{L}_{X}$/$\mathrm{d}\mathcal{L}_{Y}$ is singular and so the usual change of variables formula cannot be applied. In these cases working out the pushforward probability density functions, or the marginal density functions, is much, much harder and usually cannot be done analytically."[^6]
 
 
 
