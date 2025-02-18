@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+
+# import equinox as eqx
+# import distrax as dax
+
+# Note: parameters should inherit from transformed (similar to Stan {parameters} and {transformed parameters} blocking functionality)
+# Split into two files
+
+
+
+
 import dataclasses
 from abc import ABC, abstractmethod
 from typing import Optional, Union, Tuple
