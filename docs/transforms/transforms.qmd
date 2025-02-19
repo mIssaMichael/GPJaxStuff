@@ -311,7 +311,10 @@ When $F$ is a surjection then the density of the pushforward uniform distributio
 
 # Contraint Transformations in GPJaxStuff
 
-Why should we care about contraint transformations for Gaussian Processes? We can enforce various kinds of contraints on our mean function, kernel outputs, kernel parameters, or predictions. GPs are glorified priors on function spaces. We should be constraining that space as much as possible. The structure of our
+Why should we care about contraint transformations for Gaussian Processes? We can enforce various kinds of contraints on our mean function, kernel outputs, kernel parameters, or predictions. GPs are glorified priors on function spaces. We should be constraining that space as much as possible.
+
+
+
 
 
 
